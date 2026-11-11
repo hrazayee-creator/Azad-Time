@@ -220,7 +220,7 @@ const keyParts=k=>k.split('-').map(Number);
 const keyLabel=k=>{const[y,m,d]=keyParts(k);return `${faS(d)} ${MN[m-1]} ${faS(y)}`};
 
 /* ====== داده ====== */
-const APP_VER='۵٫۰';
+const APP_VER='۵٫۱';
 const KEY='attend_pwa_v1';
 const DEF={name:'',center:'',logo:'',start:'08:00',end:'16:00',breakMin:0,grace:10,otMin:15,offDays:[6],autoAbsent:true,preOT:false,netting:false,since:'',wageType:'monthly',wage:0,baseDays:30,otRate:0,otUnit:'h',offRate:0,defRate:0,defUnit:'h',insPct:0,folderName:'',lastBackup:0};
 let db;
