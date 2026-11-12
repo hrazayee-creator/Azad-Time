@@ -1,4 +1,4 @@
-const CACHE = 'attend-v6';
+const CACHE = 'attend-v7';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -13,19 +13,32 @@ self.addEventListener('activate', e => {
   );
 });
 
-// اول شبکه (آخرین نسخه). اگر آفلاین بود یا سرور خطا داد (404، 500، قطعی هاست)، از نسخه ذخیره‌شده باز می‌شود.
+// شروع فوری از حافظه گوشی + دریافت نسخه جدید در پس‌زمینه.
+// اگر سرور خطا بدهد یا اینترنت قطع باشد، برنامه با نسخه ذخیره‌شده کار می‌کند.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  const fallback = res => caches.match(e.request).then(h =>
-    h || (e.request.mode === 'navigate' ? caches.match('./index.html') : null) || res || Response.error());
-  e.respondWith(
-    fetch(e.request, { cache: 'no-store' }).then(res => {
+  const isDoc = e.request.mode === 'navigate';
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const hit = await cache.match(e.request);
+    const net = fetch(e.request, { cache: 'no-store' }).then(async res => {
       if (res && (res.ok || res.type === 'opaque')) {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
-        return res;
+        try {
+          if (hit && res.ok && isDoc) {
+            const [a, b] = await Promise.all([hit.clone().text(), res.clone().text()]);
+            if (a !== b) {
+              const cs = await self.clients.matchAll();
+              cs.forEach(c => c.postMessage({ type: 'updated' }));
+            }
+          }
+        } catch (_) {}
+        await cache.put(e.request, res.clone());
       }
-      return fallback(res);
-    }).catch(() => fallback(null))
-  );
+      return res;
+    }).catch(() => null);
+    if (hit) { e.waitUntil(net); return hit; }
+    const res = await net;
+    if (res && res.ok) return res;
+    return (isDoc ? await cache.match('./index.html') : null) || res || Response.error();
+  })());
 });

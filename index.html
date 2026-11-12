@@ -10,20 +10,21 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;300;400;600;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@200;300;400;600;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <title>حضور و غیاب</title>
 <style>
-:root{--fg:#f3f5ff;--mut:#9aa3cc;--acc:#7b8cff;--acc2:#4de8cf;--bad:#ff7d92;--ok:#5ef0a0;--warn:#ffd36b;--glass:rgba(255,255,255,.075);--bd:rgba(255,255,255,.14)}
+:root{--fg:#f3f5ff;--mut:#9aa3cc;--acc:#7b8cff;--acc2:#4de8cf;--bad:#ff7d92;--ok:#5ef0a0;--warn:#ffd36b;--glass:rgba(255,255,255,.085);--bd:rgba(255,255,255,.14)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
 body{font-family:Vazirmatn,Tahoma,system-ui,sans-serif;background:#0a0e27;color:var(--fg);padding-bottom:calc(100px + env(safe-area-inset-bottom));overflow-x:hidden;color-scheme:dark}
-.blob{position:fixed;border-radius:50%;filter:blur(80px);z-index:-1;animation:fl 20s ease-in-out infinite alternate}
-.b1{width:360px;height:360px;background:#4b4bff;top:-100px;right:-90px;opacity:.5}
-.b2{width:320px;height:320px;background:#00c9b0;bottom:8%;left:-120px;opacity:.38;animation-delay:-7s}
-.b3{width:260px;height:260px;background:#c04bff;top:42%;right:-130px;opacity:.28;animation-delay:-12s}
-@keyframes fl{to{transform:translate(40px,-50px) scale(1.15)}}
+.blob{position:fixed;border-radius:50%;z-index:-1;pointer-events:none}
+.b1{width:540px;height:540px;background:radial-gradient(closest-side,rgba(75,75,255,.5),transparent);top:-220px;right:-200px}
+.b2{width:480px;height:480px;background:radial-gradient(closest-side,rgba(0,201,176,.36),transparent);bottom:0;left:-220px}
+.b3{width:420px;height:420px;background:radial-gradient(closest-side,rgba(192,75,255,.26),transparent);top:40%;right:-220px}
 .wrap{max-width:560px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 14px 0}
-.glass{background:var(--glass);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid var(--bd);border-radius:24px;box-shadow:0 10px 36px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.14);padding:16px;margin-bottom:14px}
+.glass{background:var(--glass);border:1px solid var(--bd);border-radius:24px;box-shadow:0 8px 24px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.14);padding:16px;margin-bottom:14px}
+.nav,#savebar{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 h2{font-size:15px;margin:0 0 12px;color:var(--acc2);font-weight:600;display:flex;align-items:center;gap:8px}
 svg{flex:none}
 .hd{display:flex;align-items:center;gap:12px}
@@ -53,6 +54,7 @@ input[type=checkbox]{width:18px;height:18px;padding:0;accent-color:#5b7bff}
 .nav{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);width:min(94vw,440px);display:flex;padding:7px;gap:4px;z-index:5;margin:0;border-radius:26px}
 .nav button{flex:1;background:transparent;border:0;padding:9px 2px;font-size:11.5px;color:var(--mut);flex-direction:column;gap:3px;border-radius:19px}
 .nav button.on{background:rgba(255,255,255,.14);color:#fff}
+.nav button.ex{color:var(--bad)}
 .mn{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .mn button{padding:9px 13px}.mn b{font-size:17px}
 table{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -220,7 +222,7 @@ const keyParts=k=>k.split('-').map(Number);
 const keyLabel=k=>{const[y,m,d]=keyParts(k);return `${faS(d)} ${MN[m-1]} ${faS(y)}`};
 
 /* ====== داده ====== */
-const APP_VER='۵٫۱';
+const APP_VER='۵٫۲';
 const KEY='attend_pwa_v1';
 const DEF={name:'',center:'',logo:'',start:'08:00',end:'16:00',breakMin:0,grace:10,otMin:15,offDays:[6],autoAbsent:true,preOT:false,netting:false,since:'',wageType:'monthly',wage:0,baseDays:30,otRate:0,otUnit:'h',offRate:0,defRate:0,defUnit:'h',insPct:0,folderName:'',lastBackup:0};
 let db;
@@ -297,13 +299,13 @@ function salary(R){
 
 /* ====== ناوبری ====== */
 let tab='dash',vm=(()=>{const t=todayJ();return{y:t[0],m:t[1]}})(),cal=(()=>{const t=todayJ();return{y:t[0],m:t[1]}})(),selDay=todayKey(),renderedDay=todayKey();
-const NAV=[['dash','داشبورد','dash'],['report','گزارشات','chart'],['settings','تنظیمات','gear']];
+const NAV=[['dash','داشبورد','dash'],['report','گزارشات','chart'],['settings','تنظیمات','gear'],['exit','خروج','logout']];
 function go(t){
  if(tab==='settings'&&t!=='settings'){if(dirty&&!confirm('تغییرات ذخیره‌نشده در تنظیمات کنار گذاشته شود؟'))return;draft=null;dirty=false}
  if(t==='settings'&&tab!=='settings')enterSettings();
  tab=t;render();scrollTo(0,0)}
 function render(){
- $('#nav').innerHTML=NAV.map(([k,l,i])=>`<button class="${tab===k?'on':''}" onclick="go('${k}')">${ic(i,22)}<span>${l}</span></button>`).join('');
+ $('#nav').innerHTML=NAV.map(([k,l,i])=>k==='exit'?`<button class="ex" onclick="exitApp()">${ic(i,22)}<span>${l}</span></button>`:`<button class="${tab===k?'on':''}" onclick="go('${k}')">${ic(i,22)}<span>${l}</span></button>`).join('');
  renderedDay=todayKey();
  $('#app').innerHTML=tab==='dash'?viewDash():tab==='report'?viewReport():viewSettings();
  tick();if(tab==='settings')updateCalc();
@@ -311,6 +313,7 @@ function render(){
 function renderKeep(){const y=scrollY;render();scrollTo(0,y)}
 function headCard(extra=''){const s=db.s;return`<div class="glass hd">${s.logo?`<img class="logo" src="${s.logo}">`:`<div class="logo">${ic('building',26)}</div>`}<div style="flex:1"><b>${esc(s.center)||'نام مرکز را در تنظیمات وارد کنید'}</b><small>${esc(s.name)||'نام کارمند'}</small></div>${extra}</div>`}
 function tick(){
+ if(document.hidden)return;
  const n=new Date(),h=n.getHours(),hh=faS(pad(h%12||12)+':'+pad(n.getMinutes())),ss=faS(pad(n.getSeconds())),ap=h<12?'ق.ظ':'ب.ظ';
  [['ckT','ckS','ckA'],['pT','pS','pA']].forEach(([a,b,c])=>{const e=document.getElementById(a);if(e){e.textContent=hh;const x=document.getElementById(b);if(x)x.textContent=ss;const y=document.getElementById(c);if(y)y.textContent=ap}});
  const lk=document.getElementById('lkT');if(lk)lk.textContent=hh+' '+ap;
@@ -426,7 +429,7 @@ async function delAdj(i){if(!await confirmPin('حذف این مورد از حق�
 /* ====== ساخت گزارش (تصویر / PDF) ====== */
 function loadImg(src){return new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src})}
 async function buildReport(){
- try{await Promise.all([document.fonts.load('600 30px Vazirmatn'),document.fonts.load('400 30px Vazirmatn')])}catch{}
+ try{await Promise.race([Promise.all([document.fonts.load('600 30px Vazirmatn'),document.fonts.load('400 30px Vazirmatn')]),new Promise(r=>setTimeout(r,1500))])}catch{}
  const F='Vazirmatn,Tahoma,sans-serif',W=1240,H=1754,M=70,CW=W-2*M;
  const R=calcMonth(vm.y,vm.m),T=R.T,S=salary(R),s=db.s,logo=s.logo?await loadImg(s.logo):null;
  const pages=[];let c,x,y;
@@ -572,7 +575,6 @@ function viewSettings(){
   <p class="mut">${fs?'پس از انتخاب پوشه، پشتیبان‌ها داخل همان پوشه ذخیره می‌شوند.':'این مرورگر انتخاب پوشه را پشتیبانی نمی‌کند؛ فایل پشتیبان در پوشه دانلودها ذخیره می‌شود.'} هنگام «خروج» همیشه ابتدا پشتیبان گرفته می‌شود.</p>`;
  const app=`<button class="pri" style="width:100%" onclick="installApp()">${ic('phone',18)} نصب برنامه روی گوشی</button>
   <button style="width:100%;margin-top:10px" onclick="forceUpdate()">به‌روزرسانی برنامه (اطلاعات حفظ می‌شود)</button>
-  <button class="dng" style="width:100%;margin-top:10px" onclick="exitApp()">${ic('logout',18)} خروج از برنامه</button>
   <p class="mut" style="text-align:center;margin:14px 0 0">نسخه برنامه: ${APP_VER}</p>`;
  return`${headCard()}
  ${sec('wage','دستمزد و اضافه‌کار','chart',wage)}
@@ -587,7 +589,7 @@ function viewSettings(){
 function toggleOff(i,on){const a=draft.offDays;if(on&&!a.includes(i))a.push(i);if(!on)draft.offDays=a.filter(x=>x!==i);markDirty()}
 async function rmHol(x){if(!await confirmPin('حذف تعطیلی'))return;db.hol=db.hol.filter(y=>y!==x);save();renderKeep()}
 async function rmLogo(){if(!await confirmPin('حذف لوگو'))return;draft.logo='';markDirty();renderKeep()}
-function pickLogo(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),sc=Math.min(1,300/Math.max(im.width,im.height));c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);draft.logo=c.toDataURL('image/png');markDirty();renderKeep();toast('لوگو انتخاب شد؛ برای اعمال «ذخیره تغییرات» را بزنید')};im.src=r.result};r.readAsDataURL(f)}
+function pickLogo(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas'),sc=Math.min(1,256/Math.max(im.width,im.height));c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);draft.logo=c.toDataURL('image/png');markDirty();renderKeep();toast('لوگو انتخاب شد؛ برای اعمال «ذخیره تغییرات» را بزنید')};im.src=r.result};r.readAsDataURL(f)}
 function pickSince(){
  const[y,m,d]=keyParts(draft.since),ty=todayJ()[0];
  openModal(`<h2>شروع محاسبه غیبت خودکار</h2><p class="mut">روزهای کاری قبل از این تاریخ، حتی اگر چیزی ثبت نشده باشد، غیبت حساب نمی‌شوند.</p>
@@ -628,6 +630,7 @@ async function doBackup(){
 }
 async function backupNow(){const r=await doBackup();if(r.ok){toast('پشتیبان در '+r.where+' ذخیره شد');renderKeep()}else toast('پشتیبان‌گیری ناموفق بود')}
 async function exitApp(){
+ if(tab==='settings'&&dirty){if(!confirm('تغییرات ذخیره‌نشده در تنظیمات کنار گذاشته شود؟'))return;draft=null;dirty=false;render()}
  toast('در حال پشتیبان‌گیری پیش از خروج…');
  const r=await doBackup();
  if(!r.ok)return toast('پشتیبان‌گیری انجام نشد؛ خروج ممکن نیست');
@@ -718,14 +721,30 @@ function offerBio(){
  openModal(`<h2>${ic('finger',20)} ورود با اثر انگشت</h2><p class="mut">می‌خواهید دفعات بعد با اثر انگشت وارد شوید؟</p><div class="row"><button class="pri" onclick="registerBio()">فعال‌سازی</button><button onclick="closeModal()">بعداً</button></div>`);
 }
 let hid=0;
-document.addEventListener('visibilitychange',()=>{if(document.hidden)hid=Date.now();else if(db.auth.pin&&hid&&Date.now()-hid>60000&&!pinOpen&&!suspendLock){hid=0;login()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hid=Date.now();else if(pendingReload&&!dirty&&!pinOpen&&!window.__rl){window.__rl=1;location.reload()}else if(db.auth.pin&&hid&&Date.now()-hid>60000&&!pinOpen&&!suspendLock){hid=0;login()}});
 
 /* ====== شروع ====== */
+let pendingReload=false;
+function applyUpdate(){
+ if(window.__rl)return;
+ if(document.querySelector('#pin .pn-p')&&!dirty){window.__rl=1;location.reload()}
+ else{pendingReload=true;toast('نسخه جدید آماده است؛ دفعه بعد که برنامه را باز کنید اعمال می‌شود')}
+}
 if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
  const hadCtl=!!navigator.serviceWorker.controller;
- navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtl&&!window.__rl){window.__rl=1;location.reload()}});
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtl)applyUpdate()});
+ navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.type==='updated')applyUpdate()});
  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
 }
+// بررسی اینکه نسخه جدیدتری در حافظه گوشی دریافت شده یا نه (پیام سرویس‌ورکر ممکن است به صفحه در حال بارگذاری نرسد)
+async function checkUpdate(){
+ try{if(!window.caches)return;
+  const r=await caches.match(location.href.split('#')[0])||await caches.match('./');if(!r)return;
+  const t=await r.text(),m=t.match(/APP_VER='([^']*)'/);
+  if(m&&m[1]!==APP_VER)applyUpdate();
+ }catch{}
+}
+if(location.protocol.startsWith('http')){[3000,12000,40000].forEach(ms=>setTimeout(checkUpdate,ms))}
 async function forceUpdate(){
  try{if('serviceWorker'in navigator)for(const r of await navigator.serviceWorker.getRegistrations())await r.unregister();
   if(window.caches)for(const k of await caches.keys())await caches.delete(k)}catch{}
